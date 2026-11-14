@@ -96,8 +96,10 @@
     return { texto: "act. " + hace(d.generado_utc), viejo: h > limite, desde: hora(d.generado_utc) };
   }
 
-  /* Carga de datos para la app: estado.json por HTTP; si no se puede (archivo local), estado.js */
+  /* Carga de datos para la app: en GitHub Pages, desde la nube (nube.js); en la PC, estado.json por HTTP
+     y, si no se puede (archivo local), estado.js */
   function cargar(cb) {
+    if (window.RadaNube && window.RadaNube.activa) return window.RadaNube.cargar(cb);
     var hecho = false;
     function porScript() {
       var s = document.createElement("script");

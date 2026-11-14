@@ -1,0 +1,35 @@
+# Rada — publica la app (carpeta web/) en GitHub Pages cuando cambia.
+# Solo se publica la interfaz: los datos siguen cifrados en la rama 'datos' y la clave no está en el repositorio.
+name: Pagina
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", ".github/workflows/pagina.yml"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pagina
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: web
+
+      - id: despliegue
+        uses: actions/deploy-pages@v4
