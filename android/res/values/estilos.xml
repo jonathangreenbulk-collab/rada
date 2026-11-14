@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- DayNight: claro u oscuro según el teléfono; la página web lo sigue con prefers-color-scheme -->
+    <style name="Tema" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/papel</item>
+        <item name="android:colorAccent">@color/viene</item>
+    </style>
+</resources>

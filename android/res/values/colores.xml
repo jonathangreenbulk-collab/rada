@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mismos colores que web/rada.css (modo claro); el modo oscuro está en values-night. -->
+<resources>
+    <color name="papel">#F2F6F8</color>
+    <color name="superficie">#FFFFFF</color>
+    <color name="superficie_2">#F6F9FA</color>
+    <color name="tinta">#13222E</color>
+    <color name="tinta_2">#4E6270</color>
+    <color name="tinta_3">#7A8C98</color>
+    <color name="linea">#D5E0E6</color>
+    <color name="magenta">#A8196F</color>
+    <color name="viene">#1B67A8</color>
+    <color name="puerto">#9A5F05</color>
+    <color name="zarpo">#56656F</color>
+    <color name="cero">#8C7A8C98</color>
+    <color name="toque">#1F13222E</color>
+    <color name="icono_arriba">#1D4E6E</color>
+    <color name="icono_abajo">#0E2737</color>
+</resources>

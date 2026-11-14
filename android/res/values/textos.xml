@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Rada</string>
+    <string name="widget_descripcion">Buques que vienen, están en puerto y zarparon</string>
+    <string name="actualizar">Actualizar ahora</string>
+    <string name="cargando">Cargando…</string>
+    <string name="vienen">VIENEN</string>
+    <string name="en_puerto">EN PUERTO</string>
+    <string name="zarpo">ZARPÓ</string>
+</resources>

@@ -14,3 +14,4 @@ pc/cache/
 pc/*.log*
 __pycache__/
 *.tmp
+android/build/

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- En rada (fondeado esperando muelle): franja a trazos, como en la web -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="4dp" android:height="40dp" android:viewportWidth="4" android:viewportHeight="40">
+    <path android:fillColor="@color/puerto" android:pathData="M0,0h4v6h-4z M0,10h4v6h-4z M0,20h4v6h-4z M0,30h4v6h-4z" />
+</vector>

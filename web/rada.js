@@ -96,9 +96,21 @@
     return { texto: "act. " + hace(d.generado_utc), viejo: h > limite, desde: hora(d.generado_utc) };
   }
 
-  /* Carga de datos para la app: en GitHub Pages, desde la nube (nube.js); en la PC, estado.json por HTTP
-     y, si no se puede (archivo local), estado.js */
+  /* Carga de datos: dentro de la app Android, la app los entrega ya descifrados; en GitHub Pages, desde
+     la nube (nube.js); en la PC, estado.json por HTTP y, si no se puede (archivo local), estado.js */
   function cargar(cb) {
+    if (window.RadaAndroid) {
+      var id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      window.__rada = window.__rada || {};
+      window.__rada[id] = function (texto) {
+        delete window.__rada[id];
+        var d = null;
+        try { d = texto ? JSON.parse(texto) : null; } catch (e) { d = null; }
+        cb(d);
+      };
+      window.RadaAndroid.cargar(id);
+      return;
+    }
     if (window.RadaNube && window.RadaNube.activa) return window.RadaNube.cargar(cb);
     var hecho = false;
     function porScript() {

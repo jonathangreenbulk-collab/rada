@@ -315,7 +315,7 @@ details.otros summary { cursor: pointer; font-size: .82rem; color: var(--tinta-2
 
   function pintarTodo() {
     if (!D) {
-      $("grupos").innerHTML = '<p class="vacio">' + (window.RadaNube && window.RadaNube.activa
+      $("grupos").innerHTML = '<p class="vacio">' + (window.RadaAndroid || (window.RadaNube && window.RadaNube.activa)
         ? 'Sin datos todavía. Revisa la conexión y toca recargar.'
         : 'Sin datos todavía. Abre el widget de escritorio para descargarlos o espera la próxima actualización.') + '</p>';
       return;

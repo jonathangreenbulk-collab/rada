@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="papel">#0C151C</color>
+    <color name="superficie">#14212B</color>
+    <color name="superficie_2">#192833</color>
+    <color name="tinta">#E3ECF1</color>
+    <color name="tinta_2">#9DB2BF</color>
+    <color name="tinta_3">#6F8695</color>
+    <color name="linea">#253744</color>
+    <color name="magenta">#F062B9</color>
+    <color name="viene">#72B6F0</color>
+    <color name="puerto">#F0B24E</color>
+    <color name="zarpo">#A6B4BE</color>
+    <color name="cero">#8C6F8695</color>
+    <color name="toque">#24E3ECF1</color>
+</resources>
