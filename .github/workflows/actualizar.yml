@@ -1,0 +1,67 @@
+# Rada — actualización automática cada 30 minutos.
+# Repositorio público: configuración y datos van cifrados (AES-256-GCM); la clave es el secreto RADA_CLAVE.
+# Los registros de ejecución son públicos: el script solo imprime totales (RADA_PUBLICO=1).
+name: Actualizar
+
+on:
+  schedule:
+    - cron: "23,53 * * * *"   # lejos de la hora en punto, cuando GitHub va más cargado
+  workflow_dispatch: {}
+
+permissions:
+  contents: write             # publicar en la rama 'datos'
+  actions: write              # mantener viva la tarea programada
+
+concurrency:
+  group: actualizar
+  cancel-in-progress: false   # nunca dos ejecuciones a la vez (la memoria es una sola)
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dependencias
+        run: python -m pip install --quiet --disable-pip-version-check "cryptography==48.0.0"
+
+      - name: Recuperar la memoria anterior (cifrada)
+        run: |
+          if git fetch -q --depth=1 origin datos; then
+            git show FETCH_HEAD:memoria.enc > memoria.enc && echo "memoria recuperada"
+          else
+            echo "primera ejecución"
+          fi
+
+      - name: Consultar fuentes (espaciado, con topes y tope de tiempo)
+        env:
+          RADA_CLAVE: ${{ secrets.RADA_CLAVE }}
+          RADA_PUBLICO: "1"
+          RADA_TIEMPO_MAX: "40"
+        run: python -I scripts/actualizar.py --memoria memoria.enc --salida salida
+
+      - name: Publicar en la rama datos (un solo commit, sin historial que crezca)
+        run: |
+          cd salida
+          git init -q -b datos
+          git config user.name "rada-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add estado.enc memoria.enc
+          git commit -q -m "datos"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" datos
+
+      - name: Mantener viva la tarea programada (una vez al día)
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(date -u +%H)" = "05" ]; then
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/actualizar.yml/enable" && echo "ok"
+          fi

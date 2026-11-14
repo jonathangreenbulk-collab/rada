@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rada widget</title>
+<link rel="stylesheet" href="rada.css">
+<style>
+/* Widget de escritorio: tarjeta de 380×272. Cabecera arrastrable, dos columnas (una por puerto), pie con el último movimiento. */
+html, body { height: 100%; overflow: hidden; background: var(--superficie); user-select: none; }
+/* Anillo de foco solo al navegar con el teclado (la ventana recibe foco al mostrarse y no debe pintarlo) */
+:focus-visible { outline: none; }
+.teclado :focus-visible { outline: 2px solid var(--magenta); outline-offset: 1px; }
+.w { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; border: 1px solid var(--linea); border-radius: 8px; overflow: hidden; }
+
+.cab { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; background: var(--superficie-2); border-bottom: 1px solid var(--linea); cursor: grab; }
+.marca { display: flex; align-items: baseline; gap: 7px; flex: none; }
+.marca b { font: 700 1.05rem/1 var(--f-display); letter-spacing: .12em; }
+.marca span { font: 500 .66rem var(--f-texto); color: var(--tinta-3); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.fresco { margin-left: auto; font: 400 .68rem var(--f-dato); color: var(--tinta-3); white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.fresco.viejo { color: var(--magenta); }
+.acciones { display: flex; gap: 2px; }
+.acciones button {
+  appearance: none; border: 0; background: transparent; width: 26px; height: 26px; border-radius: 7px;
+  display: grid; place-items: center; color: var(--tinta-2); cursor: pointer;
+}
+.acciones button:hover { background: var(--linea); color: var(--tinta); }
+.acciones button[aria-pressed="true"] { color: var(--magenta); }
+.acciones svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.girando svg { animation: giro .9s linear infinite; }
+@keyframes giro { to { transform: rotate(360deg); } }
+
+.aviso { padding: 5px 14px; font-size: .7rem; color: var(--magenta); background: var(--magenta-bg); border-bottom: 1px solid var(--linea); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.puertos { display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+.col { display: grid; grid-template-rows: auto auto 1fr; gap: 8px; padding: 10px 12px 8px; min-width: 0; }
+.col + .col { border-left: 1px solid var(--linea); }
+.col-cab { appearance: none; border: 0; background: none; padding: 0; text-align: left; cursor: pointer;
+           font: 700 .92rem/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--tinta); }
+.col-cab:hover { color: var(--viene); }
+.cuentas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.cuenta { display: grid; gap: 1px; }
+.cuenta b { font: 700 1.45rem/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.cuenta span { font: 500 .58rem var(--f-texto); letter-spacing: .05em; text-transform: uppercase; color: var(--tinta-3); white-space: nowrap; }
+.cuenta.cero b { color: var(--tinta-3); opacity: .55; }
+.filas { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; align-content: start; min-width: 0; }
+.fila { appearance: none; border: 0; background: transparent; width: 100%; text-align: left; cursor: pointer;
+        display: flex; gap: 8px; padding: 4px 6px 4px 0; border-radius: 6px; min-width: 0; }
+.fila:hover { background: var(--superficie-2); }
+.fila .franja { width: 3px; }
+.fila div { display: grid; min-width: 0; }
+.fila b { font: 600 .9rem/1.15 var(--f-display); letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fila small { font: 400 .66rem/1.25 var(--f-dato); color: var(--tinta-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fila small.aprox { color: var(--magenta); }
+.col-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; min-width: 0; }
+.mas { font: 500 .66rem var(--f-dato); color: var(--tinta-3); padding: 0; cursor: pointer; background: none; border: 0; white-space: nowrap; }
+.mas:hover { color: var(--viene); }
+.vacio { font-size: .72rem; color: var(--tinta-3); padding: 4px 0; }
+
+.pie { display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-top: 1px solid var(--linea); font-size: .7rem; color: var(--tinta-2); min-width: 0; }
+.pie span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pie b { font-weight: 600; color: var(--tinta); }
+.pie time { font: 400 .64rem var(--f-dato); color: var(--tinta-3); white-space: nowrap; }
+.cargando .puertos, .cargando .pie { opacity: .5; }
+@media (prefers-reduced-motion: no-preference) { .fila, .acciones button { transition: background-color .15s, color .15s; } }
+</style>
+</head>
+<body>
+<div class="w cargando" id="w">
+  <header class="cab pywebview-drag-region">
+    <div class="marca pywebview-drag-region"><b>RADA</b><span id="flota"></span></div>
+    <span class="fresco pywebview-drag-region" id="fresco">cargando…</span>
+    <div class="acciones">
+      <button id="b-act" type="button" title="Actualizar ahora" aria-label="Actualizar ahora">
+        <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+      <button id="b-fijar" type="button" title="Mantener encima de las ventanas" aria-label="Mantener encima" aria-pressed="false">
+        <svg viewBox="0 0 24 24"><path d="M9 4h6l-1 6 4 4H6l4-4z"/><path d="M12 14v7"/></svg></button>
+      <button id="b-app" type="button" title="Abrir Rada completa" aria-label="Abrir Rada completa">
+        <svg viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></button>
+      <button id="b-cerrar" type="button" title="Cerrar el widget" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+  </header>
+  <div class="aviso" id="aviso" hidden></div>
+  <main class="puertos" id="puertos"></main>
+  <footer class="pie" id="pie"><i class="punto p-zarpo"></i><span>Sin movimientos registrados todavía</span></footer>
+</div>
+<script src="rada.js"></script>
+<script>
+(function () {
+  "use strict";
+  var R = window.Rada, MAX_FILAS = 3, datos = null, origen = null;
+  function $(id) { return document.getElementById(id); }
+  function api() { return window.pywebview && window.pywebview.api; }
+
+  function filas(p) {
+    var lista = [];
+    p.vienen.slice().sort(function (a, b) { return (R.etaDe(a) || "9") < (R.etaDe(b) || "9") ? -1 : 1; })
+      .forEach(function (b) { lista.push(["vienen", b]); });
+    p.en_puerto.slice().sort(function (a, b) { return (a.en_rada - b.en_rada) || ((a.llegada_utc || "") < (b.llegada_utc || "") ? -1 : 1); })
+      .forEach(function (b) { lista.push(["en_puerto", b]); });
+    p.zarparon.slice().sort(function (a, b) { return (a.salio_utc || "") > (b.salio_utc || "") ? -1 : 1; })
+      .forEach(function (b) { lista.push(["zarparon", b]); });
+    return lista;
+  }
+
+  function columna(lc, p) {
+    var c = [["vienen", "n-viene", "vienen"], ["en_puerto", "n-puerto", "en puerto"], ["zarparon", "n-zarpo", "zarpó"]]
+      .map(function (k) {
+        var n = p[k[0]].length;
+        return '<div class="cuenta' + (n ? "" : " cero") + '"><b class="' + k[1] + '">' + n + '</b><span>' + k[2] + '</span></div>';
+      }).join("");
+    var todas = filas(p), html = "";
+    todas.slice(0, MAX_FILAS).forEach(function (f) {
+      var tipo = f[0], b = f[1], aprox = tipo === "vienen" && !b.eta_ais_utc && b.eta_aprox_utc;
+      html += '<li><button class="fila" type="button" data-imo="' + R.esc(b.imo) + '" title="' + R.esc(R.nombre(b) + " · " + (b.donde_es || "")) + '">' +
+        '<span class="franja ' + R.franja(tipo, b) + '"></span><div><b>' + R.esc(R.nombre(b)) + '</b>' +
+        '<small class="' + (aprox ? "aprox" : "") + '">' + R.esc(R.resumen(tipo, b)) + '</small></div></button></li>';
+    });
+    if (!todas.length) html = '<li class="vacio">Sin buques' + (R.FLOTA ? " " + R.esc(R.FLOTA) : "") + ' ahora</li>';
+    var mas = todas.length > MAX_FILAS
+      ? '<button class="mas" type="button" data-lc="' + lc + '" title="Ver todos en la app">+' + (todas.length - MAX_FILAS) + ' más</button>' : '';
+    return '<section class="col"><div class="col-top"><button class="col-cab" type="button" data-lc="' + lc + '">' + R.CORTO[lc] + '</button>' + mas + '</div>' +
+      '<div class="cuentas">' + c + '</div><ul class="filas">' + html + '</ul></section>';
+  }
+
+  function frescura() {
+    var f = R.frescura(datos), el = $("fresco");
+    el.textContent = f.viejo && datos ? "sin actualizar desde " + f.desde : f.texto;
+    el.classList.toggle("viejo", !!f.viejo);
+  }
+
+  function pintar(res) {
+    $("w").classList.remove("cargando");
+    if (!res || !res.estado) {
+      $("puertos").innerHTML = '<p class="vacio" style="padding:14px">Sin datos todavía. ' + R.esc(res && res.error || "") + '</p>';
+      return;
+    }
+    datos = res.estado; origen = res.origen;
+    R.configurar(datos);
+    $("flota").textContent = datos.flota || "";
+    var codigos = Object.keys(datos.puertos || {});
+    $("puertos").style.gridTemplateColumns = "repeat(" + Math.max(1, codigos.length) + ", minmax(0, 1fr))";
+    $("puertos").innerHTML = codigos.map(function (lc) { return columna(lc, datos.puertos[lc]); }).join("");
+    var avisos = (datos.avisos || []).map(function (a) { return a.sitio + " en pausa hasta " + R.hora(a.hasta_utc); });
+    if (res.error && origen !== "nube") avisos.unshift("Sin conexión con la nube: datos guardados");
+    $("aviso").hidden = !avisos.length;
+    $("aviso").textContent = avisos.join(" · ");
+    var e = (datos.eventos || [])[0];
+    if (e) {
+      var ev = R.evento(e);
+      $("pie").innerHTML = '<i class="punto ' + ev.clase + '"></i><span>' + ev.html + '</span><time>' + R.hace(ev.cuando) + '</time>';
+    }
+    frescura();
+  }
+
+  function sincronizar(forzar) {
+    var a = api(), btn = $("b-act");
+    btn.classList.add("girando");
+    var fin = function () { btn.classList.remove("girando"); };
+    if (a) {
+      (forzar ? a.refrescar() : a.estado()).then(function (r) { pintar(r); fin(); }, function () { fin(); });
+    } else {                                   // abierto en un navegador normal (pruebas): lee estado.js
+      R.cargar(function (d) { pintar({ estado: d, origen: "local" }); fin(); });
+    }
+  }
+
+  document.addEventListener("click", function (ev) {
+    var a = api();
+    var fila = ev.target.closest("[data-imo]"), lc = ev.target.closest("[data-lc]");
+    if (fila && a) return a.abrir_app(fila.getAttribute("data-imo"));
+    if (lc && a) return a.abrir_app(lc.getAttribute("data-lc"));
+    if (ev.target.closest("#b-act")) return sincronizar(true);
+    if (ev.target.closest("#b-app") && a) return a.abrir_app("");
+    if (ev.target.closest("#b-cerrar") && a) return a.cerrar();
+    if (ev.target.closest("#b-fijar") && a) {
+      var b = $("b-fijar"), nuevo = b.getAttribute("aria-pressed") !== "true";
+      a.fijar(nuevo).then(function (v) { b.setAttribute("aria-pressed", String(!!v)); });
+    }
+  });
+
+  document.addEventListener("keydown", function (e) { if (e.key === "Tab") document.documentElement.classList.add("teclado"); });
+  document.addEventListener("mousedown", function () { document.documentElement.classList.remove("teclado"); });
+
+  var relojes = false;
+  function arrancarRelojes() {
+    if (relojes) return;
+    relojes = true;
+    setInterval(function () { sincronizar(false); }, 5 * 60 * 1000);
+    setInterval(frescura, 30 * 1000);
+  }
+  function conPuente() {                       // dentro del widget: hay puente con Python
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    api().config().then(function (c) { $("b-fijar").setAttribute("aria-pressed", String(!!c.encima)); });
+    sincronizar(false);
+    arrancarRelojes();
+  }
+  window.addEventListener("pywebviewready", conPuente);
+  if (api() && api().estado) conPuente();
+  else setTimeout(function () { if (!api()) { sincronizar(false); arrancarRelojes(); } }, 1200);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Secretos y archivos locales: nunca se suben
+claves/
+*.key
+.env
+descargas/
+datos/
+salida/
+/memoria.enc
+/estado.enc
+web/estado.json
+web/estado.js
+pc/config.json
+pc/cache/
+pc/*.log*
+__pycache__/
+*.tmp

@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14212B">
+<title>Rada</title>
+<link rel="stylesheet" href="rada.css">
+<style>
+/* App: en escritorio, lista (izquierda) + ficha (derecha, fija); en pantalla estrecha, la ficha se desliza encima. */
+body {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 40px;
+}
+.app { max-width: 1180px; margin: 0 auto; display: grid; gap: 18px; }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; }
+
+.barra { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--papel);
+         display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding-block: 14px 12px; border-bottom: 1px solid var(--linea); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--papel); }
+.marca { display: grid; gap: 1px; margin-right: auto; }
+.marca h1 { font-size: 1.9rem; font-weight: 700; line-height: 1; letter-spacing: .04em; }
+.marca span { font-size: .78rem; color: var(--tinta-2); }
+.fresco { display: inline-flex; align-items: center; gap: 7px; font: 400 .74rem var(--f-dato); color: var(--tinta-2); }
+.fresco.viejo { color: var(--magenta); }
+.boton { appearance: none; border: 1px solid var(--linea); background: var(--superficie); border-radius: 10px;
+         padding: 7px 12px; font: 600 .8rem var(--f-texto); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.boton:hover { border-color: var(--tinta-3); }
+.boton svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.girando svg { animation: giro .9s linear infinite; }
+@keyframes giro { to { transform: rotate(360deg); } }
+
+.avisos { display: grid; gap: 6px; }
+.aviso { font-size: .82rem; background: var(--magenta-bg); color: var(--tinta); border-radius: 10px; padding: 9px 12px; }
+.aviso b { color: var(--magenta); }
+
+.cuerpo { display: grid; grid-template-columns: minmax(0, 430px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.izq { display: grid; gap: 22px; min-width: 0; }
+
+.segmento { display: grid; grid-template-columns: 1fr 1fr; background: var(--superficie-2); border: 1px solid var(--linea); border-radius: 12px; padding: 3px; gap: 3px; }
+.segmento button { appearance: none; border: 0; background: transparent; color: var(--tinta-2); font: 600 .9rem var(--f-texto);
+                   padding: 8px 6px; border-radius: 9px; cursor: pointer; display: grid; gap: 2px; justify-items: center; }
+.segmento button small { font: 400 .68rem var(--f-dato); color: var(--tinta-3); }
+.segmento button[aria-pressed="true"] { background: var(--superficie); color: var(--tinta); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+
+.grupo { display: grid; gap: 8px; align-content: start; }
+.grupo-cab { display: flex; align-items: center; gap: 8px; }
+.grupo-cab h2 { font: 700 .78rem var(--f-texto); letter-spacing: .08em; text-transform: uppercase; }
+.grupo-cab .cuenta { font: 500 .72rem var(--f-dato); color: var(--tinta-3); }
+.vacio { font-size: .84rem; color: var(--tinta-3); padding: 10px 12px; border: 1px dashed var(--linea); border-radius: 12px; margin: 0; }
+
+.tarjeta { appearance: none; text-align: left; width: 100%; cursor: pointer; background: var(--superficie); border: 1px solid var(--linea);
+           border-radius: 14px; padding: 11px 12px; display: grid; grid-template-columns: 4px 1fr; gap: 0 11px; }
+.tarjeta:hover { border-color: var(--tinta-3); }
+.tarjeta[aria-current="true"] { border-color: var(--magenta); box-shadow: 0 0 0 1px var(--magenta); }
+.tarjeta .franja { grid-row: 1 / span 3; width: 4px; }
+.t-nombre { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; min-width: 0; }
+.t-nombre b { font: 700 1.18rem/1.15 var(--f-display); letter-spacing: .02em; min-width: 0; overflow-wrap: anywhere; }
+.t-linea { font-size: .82rem; color: var(--tinta-2); min-width: 0; overflow-wrap: anywhere; }
+.t-linea .dato { color: var(--tinta); font-size: .78rem; }
+.t-meta { display: block; font: 400 .68rem var(--f-dato); color: var(--tinta-3); margin-top: 3px; }
+
+.novedades ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border: 1px solid var(--linea); border-radius: 14px; background: var(--superficie); overflow: hidden; }
+.novedades li { display: grid; grid-template-columns: 10px 1fr; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--linea); font-size: .84rem; }
+.novedades li:first-child { border-top: 0; }
+.novedades .punto { margin-top: 6px; }
+.novedades time { display: block; font: 400 .7rem var(--f-dato); color: var(--tinta-3); }
+
+details.otros summary { cursor: pointer; font-size: .82rem; color: var(--tinta-2); }
+.otros-lista { display: grid; gap: 6px; margin-top: 10px; }
+.otro { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: .8rem; padding: 8px 10px; background: var(--superficie); border: 1px solid var(--linea); border-radius: 10px; }
+.otro b { font: 600 1rem var(--f-display); letter-spacing: .02em; }
+.otro span { color: var(--tinta-3); }
+
+/* ficha */
+.det { position: sticky; top: 92px; background: var(--superficie); border: 1px solid var(--linea); border-radius: 18px; padding: 20px; display: grid; gap: 18px; align-content: start; min-width: 0; }
+.volver { display: none; }
+.det-cab { display: grid; gap: 6px; }
+.det-cab b { font: 700 2.2rem/1 var(--f-display); letter-spacing: .02em; overflow-wrap: anywhere; }
+.ruta { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; background: var(--superficie-2); border: 1px solid var(--linea); border-radius: 14px; padding: 14px; }
+.ruta .lado { display: grid; gap: 2px; min-width: 0; }
+.ruta .lado:last-child { text-align: right; }
+.ruta .puerto-n { font: 700 1.2rem/1.1 var(--f-display); overflow-wrap: anywhere; }
+.ruta .cuando { font: 400 .74rem var(--f-dato); color: var(--tinta-2); }
+.ruta svg { width: 80px; height: 20px; }
+.ruta svg line { stroke: var(--tinta-3); }
+.ruta svg circle { fill: var(--superficie-2); stroke: var(--tinta-3); }
+.ruta svg path { fill: var(--tinta); }
+.cuadro { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--linea); border: 1px solid var(--linea); border-radius: 14px; overflow: hidden; }
+.cuadro > div { background: var(--superficie); padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.cuadro .v { font: 500 .88rem var(--f-dato); overflow-wrap: anywhere; }
+.dos { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.linea-tiempo { list-style: none; margin: 0; padding: 0; }
+.linea-tiempo li { display: grid; grid-template-columns: 14px 1fr; gap: 10px; }
+.linea-tiempo .eje { display: grid; justify-items: center; grid-template-rows: 14px 1fr; }
+.linea-tiempo .eje i { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--tinta-3); background: var(--superficie); margin-top: 3px; }
+.linea-tiempo .eje u { width: 2px; background: var(--linea); }
+.linea-tiempo li:last-child .eje u { background: transparent; }
+.linea-tiempo li.ve .eje i { border-color: var(--puerto); background: var(--puerto); }
+.linea-tiempo .info { padding-bottom: 12px; font-size: .84rem; min-width: 0; }
+.linea-tiempo .info .dato { display: block; font-size: .72rem; color: var(--tinta-2); }
+.nota { font-size: .8rem; color: var(--tinta-2); background: var(--magenta-bg); border-radius: 10px; padding: 10px 12px; margin: 0; }
+.nota b { color: var(--magenta); }
+.nota.neutra { background: var(--viene-bg); }
+.nota.neutra b { color: var(--viene); }
+.fuentes-links { display: flex; flex-wrap: wrap; gap: 14px; font-size: .8rem; }
+.fuentes-links a { color: var(--viene); }
+.pie-app { font-size: .74rem; color: var(--tinta-3); }
+
+@media (max-width: 899px) {
+  .cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .det { position: fixed; inset: 0; top: 0; border-radius: 0; border: 0; z-index: 20; overflow-y: auto;
+         padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+         transform: translateX(100%); visibility: hidden; }
+  .det.abierta { transform: none; visibility: visible; }
+  .volver { display: inline-flex; justify-self: start; }
+  .cuadro { grid-template-columns: 1fr 1fr; }
+  .dos { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .det { transition: transform .22s ease, visibility .22s; }
+  .tarjeta, .segmento button, .boton { transition: border-color .15s, background-color .15s, box-shadow .15s; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="barra">
+    <div class="marca"><h1>Rada</h1><span id="subtitulo"></span></div>
+    <span class="fresco" id="fresco"><i class="punto p-zarpo"></i>cargando…</span>
+    <button class="boton" id="b-recargar" type="button" title="Volver a leer los datos">
+      <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>Recargar</button>
+  </header>
+  <div class="avisos" id="avisos"></div>
+  <div class="cuerpo">
+    <div class="izq">
+      <div class="segmento" role="group" aria-label="Puerto" id="segmento"></div>
+      <div id="grupos" class="izq"></div>
+      <section class="novedades grupo" aria-labelledby="t-nov">
+        <div class="grupo-cab"><i class="punto p-falta"></i><h2 id="t-nov">Últimos movimientos</h2></div>
+        <ol id="novedades"></ol>
+      </section>
+      <details class="otros" id="otros"></details>
+      <p class="pie-app" id="pie-app"></p>
+    </div>
+    <aside class="det" id="det" aria-live="polite"></aside>
+  </div>
+</div>
+<script src="rada.js"></script>
+<script>
+(function () {
+  "use strict";
+  var R = window.Rada, D = null;
+  var ui = { puerto: "", sel: null };
+  try { ui.puerto = localStorage.getItem("rada.puerto") || ""; } catch (e) {}
+  function codigos() { return Object.keys((D && D.puertos) || {}); }
+  function flota() { return R.FLOTA ? " " + R.FLOTA : ""; }
+  function $(id) { return document.getElementById(id); }
+  var esc = R.esc;
+  var GRUPOS = [["vienen", "Vienen", "p-viene"], ["en_puerto", "En puerto", "p-puerto"], ["zarparon", "Zarparon", "p-zarpo"]];
+
+  function ordenar(p) {
+    p.vienen.sort(function (a, b) { return (R.etaDe(a) || "9") < (R.etaDe(b) || "9") ? -1 : 1; });
+    p.en_puerto.sort(function (a, b) { return (a.en_rada - b.en_rada) || ((a.llegada_utc || "") < (b.llegada_utc || "") ? -1 : 1); });
+    p.zarparon.sort(function (a, b) { return (a.salio_utc || "") > (b.salio_utc || "") ? -1 : 1; });
+  }
+  function cuentas(lc) { var p = D.puertos[lc]; return p.vienen.length + " · " + p.en_puerto.length + " · " + p.zarparon.length; }
+
+  function lineas(tipo, b) {
+    var l1, l2;
+    if (tipo === "vienen") {
+      l1 = 'Salió de <b>' + esc(b.salio_de || "?") + '</b> <span class="dato">' + R.fecha(b.salio_utc) + '</span>';
+      l2 = b.eta_ais_utc ? '<b>ETA <span class="dato">' + R.fecha(b.eta_ais_utc) + '</span></b> · ' + R.hasta(b.eta_ais_utc) + ' · declarado por el buque'
+        : b.eta_aprox_utc ? '<span class="falta">ETA aprox. <span class="dato" style="color:inherit">' + R.fecha(b.eta_aprox_utc) + '</span> · cálculo propio</span>'
+        : '<span class="falta">ETA: sin dato</span>';
+    } else if (tipo === "en_puerto") {
+      l1 = (b.en_rada ? "Fondeado en rada" : "Atracado") + ' desde <span class="dato">' + R.fecha(b.llegada_utc) + '</span> · ' + R.duracion(b.llegada_utc);
+      l2 = 'Próximo destino: ' + (b.destino ? esc(b.destino) : 'sin declarar');
+    } else {
+      l1 = 'Zarpó <span class="dato">' + R.fecha(b.salio_utc) + '</span> · ' + R.hace(b.salio_utc);
+      l2 = 'Rumbo a <b>' + esc(b.destino || "—") + '</b>' + (b.destino_pais ? ', ' + esc(b.destino_pais) : '');
+    }
+    return [l1, l2];
+  }
+
+  function tarjeta(tipo, b, i) {
+    var c = R.chip(tipo, b), l = lineas(tipo, b);
+    var sel = ui.sel && ui.sel.tipo === tipo && ui.sel.imo === b.imo;
+    return '<button class="tarjeta" type="button" data-tipo="' + tipo + '" data-imo="' + esc(b.imo) + '" aria-current="' + sel + '">' +
+      '<span class="franja ' + R.franja(tipo, b) + '"></span>' +
+      '<span class="t-nombre"><b>' + esc(R.nombre(b)) + '</b><span class="chip ' + c[0] + '">' + c[1] + '</span></span>' +
+      '<span class="t-linea">' + l[0] + '</span>' +
+      '<span class="t-linea">' + l[1] + '<span class="t-meta">IMO ' + esc(b.imo) + (b.eslora_m ? ' · ' + b.eslora_m + ' m' : '') +
+      (b.calado_actual_m ? ' · calado ' + b.calado_actual_m + ' m' : '') + ' · leído ' + R.hace(b.leido_utc) + '</span></span></button>';
+  }
+
+  function pintarLista() {
+    var p = D.puertos[ui.puerto];
+    $("segmento").style.gridTemplateColumns = "repeat(" + Math.max(1, codigos().length) + ", minmax(0, 1fr))";
+    $("segmento").innerHTML = codigos().map(function (lc) {
+      return '<button type="button" data-puerto="' + lc + '" aria-pressed="' + (lc === ui.puerto) + '">' + R.PUERTOS[lc] +
+        '<small>' + cuentas(lc) + '</small></button>';
+    }).join("");
+    $("grupos").innerHTML = GRUPOS.map(function (g) {
+      var lista = p[g[0]];
+      var vacio = { vienen: "Ningún buque" + flota() + " declara " + p.nombre + " como destino ahora mismo.",
+        en_puerto: "Ningún buque" + flota() + " en " + p.nombre + " ahora mismo.",
+        zarparon: "Ningún buque" + flota() + " zarpó de " + p.nombre + " en los últimos 10 días." }[g[0]];
+      return '<section class="grupo"><div class="grupo-cab"><i class="punto ' + g[2] + '"></i><h2>' + g[1] + '</h2><span class="cuenta">' + lista.length + '</span></div>' +
+        (lista.length ? lista.map(function (b, i) { return tarjeta(g[0], b, i); }).join("") : '<p class="vacio">' + vacio + '</p>') + '</section>';
+    }).join("");
+    var otros = p.otros_en_puerto || [];
+    $("otros").innerHTML = '<summary>Otros buques en ' + esc(p.nombre) + ' · muestra de ' + otros.length + ' de ' + (p.total_en_puerto || "?") + '</summary>' +
+      '<div class="otros-lista">' + (otros.map(function (o) {
+        return '<div class="otro"><b>' + esc(o.nombre) + '</b><span class="dato">' + R.fecha(o.llegada_utc) + '</span><span>' + esc(o.tipo) + '</span><span>' + R.hace(o.llegada_utc) + '</span></div>';
+      }).join("") || '<p class="vacio">Sin datos</p>') + '</div>';
+  }
+
+  function pintarNovedades() {
+    var ev = (D.eventos || []).slice(0, 12);
+    $("novedades").innerHTML = ev.length ? ev.map(function (e) {
+      var x = R.evento(e);
+      return '<li><i class="punto ' + x.clase + '"></i><div>' + x.html + '<time>' + R.hace(x.cuando) + ' · ' + R.fecha(x.cuando) + '</time></div></li>';
+    }).join("") : '<li><span></span><div class="t-linea">Aún no hay movimientos. Aparecerán aquí cuando un buque fondee, atraque, zarpe o cambie su ETA.</div></li>';
+  }
+
+  function buscar(imo) {
+    var cs = codigos();
+    for (var i = 0; i < cs.length; i++) {
+      var lc = cs[i];
+      for (var j = 0; j < GRUPOS.length; j++) {
+        var t = GRUPOS[j][0], b = D.puertos[lc][t].filter(function (x) { return x.imo === imo; })[0];
+        if (b) return { puerto: lc, tipo: t, imo: imo, b: b };
+      }
+    }
+    return null;
+  }
+
+  function pintarDetalle() {
+    var el = $("det"), s = ui.sel && buscar(ui.sel.imo);
+    if (!s) {
+      el.classList.remove("abierta");
+      el.innerHTML = '<p class="vacio">Toca un buque para ver su ficha: ruta, estado, escalas e historial.</p>';
+      return;
+    }
+    var b = s.b, c = R.chip(s.tipo, b), enP = s.tipo === "en_puerto";
+    var origen = enP ? ((b.ultimas_escalas || [])[1] || {}).puerto : b.salio_de;
+    var destino = enP ? R.PUERTOS[s.puerto] : b.destino;
+    var cuandoO = enP ? "escala anterior" : "zarpe " + R.fecha(b.salio_utc);
+    var cuandoD = enP ? (b.en_rada ? "fondeó " : "llegó ") + R.fecha(b.llegada_utc)
+      : s.tipo === "vienen" ? (b.eta_ais_utc ? "ETA " + R.fecha(b.eta_ais_utc) : '<span class="falta">' + (b.eta_aprox_utc ? "ETA ≈ " + R.fecha(b.eta_aprox_utc) : "sin ETA") + '</span>')
+      : "sin ETA en la fuente";
+    var escalas = (b.ultimas_escalas || []).map(function (e) {
+      var t = e.llegada_utc ? "llegó " + R.fecha(e.llegada_utc) + (e.salida_utc ? " · salió " + R.fecha(e.salida_utc) : " · sigue ahí") : "horas solo en versión de pago";
+      var ve = codigos().some(function (lc) { return (e.puerto || "").indexOf(R.PUERTOS[lc]) >= 0; });
+      return '<li class="' + (ve ? "ve" : "") + '"><div class="eje"><i></i><u></u></div><div class="info"><b>' + esc(e.puerto) + '</b> (' + esc((e.pais || "").toUpperCase()) + ')<span class="dato">' + t + '</span></div></li>';
+    }).join("");
+    var NOMBRE_REL = { rada: "Fondeó en la rada de", atracado: "Atracó en", viene: "Puso rumbo a", zarpo: "Zarpó de" };
+    var hist = (b.historial || []).map(function (h) {
+      return '<li class="' + (h.tipo === "rada" || h.tipo === "atracado" ? "ve" : "") + '"><div class="eje"><i></i><u></u></div><div class="info">' +
+        (NOMBRE_REL[h.tipo] || h.tipo) + ' ' + esc(R.PUERTOS[h.puerto] || h.puerto) + '<span class="dato">' + (h.aprox ? "≈ " : "") + R.fecha(h.desde_utc) + '</span></div></li>';
+    }).join("");
+    var nota = "";
+    if (s.tipo === "vienen" && b.eta_ais_utc) nota = '<p class="nota neutra"><b>ETA declarado por el buque.</b> Lo envía la tripulación por AIS; leído en VesselFinder ' + R.hace(b.vf_leido_utc) + '.' + (b.eta_aprox_utc ? ' El cálculo propio daba ≈ ' + R.fecha(b.eta_aprox_utc) + '.' : '') + '</p>';
+    else if (s.tipo === "vienen") nota = '<p class="nota"><b>ETA no oficial.</b> ' + (b.eta_calculo ? 'Calculado desde la salida: ' + esc(b.eta_calculo) + '. ' : '') + 'Confírmalo con una fuente oficial.</p>';
+    else if (enP && b.en_rada) nota = '<p class="nota"><b>Esperando muelle.</b> Fondeado en rada desde hace ' + R.duracion(b.llegada_utc) + '. Rada lo revisa cada hora y avisará cuando atraque.</p>';
+
+    el.innerHTML =
+      '<button class="boton volver" type="button" id="b-volver">← Volver</button>' +
+      '<div class="det-cab"><span class="chip ' + c[0] + '" style="justify-self:start">' + c[1] + ' · ' + esc(R.PUERTOS[s.puerto]) + '</span>' +
+        '<b>' + esc(R.nombre(b)) + '</b><span class="t-linea">' + esc(b.tipo || "") + ' · IMO ' + esc(b.imo) + ' · MMSI ' + esc(b.mmsi) + '</span></div>' +
+      '<div class="ruta"><div class="lado"><span class="etiqueta">Desde</span><span class="puerto-n">' + esc(origen || "—") + '</span><span class="cuando">' + cuandoO + '</span></div>' +
+        '<svg viewBox="0 0 80 20" aria-hidden="true"><line x1="5" y1="10" x2="68" y2="10" stroke-width="1.5" stroke-dasharray="3 3"></line><circle cx="5" cy="10" r="4" stroke-width="1.5"></circle><path d="M66 4 L77 10 L66 16 Z"></path></svg>' +
+        '<div class="lado"><span class="etiqueta">Hacia</span><span class="puerto-n">' + esc(destino || "—") + '</span><span class="cuando">' + cuandoD + '</span></div></div>' +
+      nota +
+      '<div class="cuadro">' +
+        '<div><span class="etiqueta">Estado AIS</span><span class="v">' + esc(b.estado_es || "—") + '</span></div>' +
+        '<div><span class="etiqueta">Dónde está</span><span class="v">' + esc(b.donde_es || "—") + '</span></div>' +
+        '<div><span class="etiqueta">Posición</span><span class="v">' + esc((b.dato_ais_hace || "—").replace("less than", "<").replace("minutes ago", "min").replace(" ago", "")) + '</span></div>' +
+        '<div><span class="etiqueta">Eslora</span><span class="v">' + (b.eslora_m ? b.eslora_m + " m" : "—") + '</span></div>' +
+        '<div><span class="etiqueta">Calado actual</span><span class="v">' + (b.calado_actual_m ? b.calado_actual_m + " m" : "—") + '</span></div>' +
+        '<div><span class="etiqueta">Bandera · año</span><span class="v">' + esc((b.bandera || "—") + " · " + (b.construido || "—")) + '</span></div>' +
+      '</div>' +
+      '<div class="dos">' +
+        '<div class="grupo"><span class="etiqueta">Últimas escalas</span><ol class="linea-tiempo">' + escalas + '</ol></div>' +
+        '<div class="grupo"><span class="etiqueta">Historial en Rada</span><ol class="linea-tiempo">' + (hist || '<li><span></span><div class="info t-linea">Se irá llenando con cada cambio.</div></li>') + '</ol></div>' +
+      '</div>' +
+      '<div class="fuentes-links"><a href="' + esc(b.ficha) + '" target="_blank" rel="noopener">Ficha en Maritime Optima ↗</a>' +
+        (s.tipo === "vienen" ? '<a href="https://www.vesselfinder.com/vessels/details/' + esc(b.imo) + '" target="_blank" rel="noopener">Ficha en VesselFinder ↗</a>' : '') +
+        '<span class="t-meta">Leído ' + R.hace(b.leido_utc) + '</span></div>';
+    if (window.matchMedia("(max-width: 899px)").matches) el.classList.add("abierta");
+  }
+
+  function pintarCabecera() {
+    var f = R.frescura(D);
+    var el = $("fresco");
+    el.className = "fresco" + (f.viejo ? " viejo" : "");
+    el.innerHTML = '<i class="punto ' + (f.viejo ? "p-falta" : "p-viene") + '"></i>' +
+      (f.viejo ? "Sin actualizar desde " + f.desde : "Actualizado " + R.hace(D.generado_utc) + " · cada " +
+        ((D.cada_min || 60) >= 60 ? ((D.cada_min || 60) / 60) + " h" : D.cada_min + " min"));
+    var av = (D.avisos || []).map(function (a) {
+      return '<div class="aviso"><b>' + esc(a.sitio) + ' en pausa</b> hasta las ' + R.hora(a.hasta_utc) + ' (' + esc(a.motivo || "") + '). Se muestran los últimos datos buenos.</div>';
+    });
+    if (f.viejo) av.unshift('<div class="aviso"><b>Datos sin actualizar</b> desde las ' + f.desde + '. La actualización automática puede estar detenida; los buques mostrados pueden haber cambiado.</div>');
+    $("avisos").innerHTML = av.join("");
+    $("pie-app").textContent = "Fuente: " + (D.fuente || "AIS") + ". Consultas hoy: " +
+      Object.keys(D.consultas_hoy || {}).map(function (k) { return k + " " + D.consultas_hoy[k]; }).join(", ") +
+      ". Flota vigilada: " + (D.flota_vigilada || "?") + " buques.";
+  }
+
+  function pintarTodo() {
+    if (!D) {
+      $("grupos").innerHTML = '<p class="vacio">Sin datos todavía. Abre el widget de escritorio para descargarlos o espera la próxima actualización.</p>';
+      return;
+    }
+    R.configurar(D);
+    if (!D.puertos[ui.puerto]) ui.puerto = codigos()[0];
+    $("subtitulo").textContent = "Buques" + flota() + " · " +
+      codigos().map(function (lc) { return R.PUERTOS[lc]; }).join(" y ") + (D.zona_horaria_nombre ? " · " + D.zona_horaria_nombre : "");
+    codigos().forEach(function (lc) { ordenar(D.puertos[lc]); });
+    pintarCabecera(); pintarLista(); pintarNovedades(); pintarDetalle();
+  }
+
+  function seleccionarDesdeHash() {
+    var h = decodeURIComponent((location.hash || "").slice(1));
+    if (!h || !D) return;
+    if (D.puertos[h]) { ui.puerto = h; return; }
+    var s = buscar(h.replace(/^imo-/, ""));
+    if (s) { ui.puerto = s.puerto; ui.sel = { tipo: s.tipo, imo: s.imo }; }
+  }
+
+  function cargar(boton) {
+    if (boton) boton.classList.add("girando");
+    R.cargar(function (d) {
+      if (boton) boton.classList.remove("girando");
+      if (d) D = d;
+      if (!ui.sel) seleccionarDesdeHash();
+      if (!ui.sel && D) {                        // primera vista: el primer buque del puerto activo
+        var p = D.puertos[ui.puerto] || D.puertos[codigos()[0]];
+        var t = GRUPOS.map(function (g) { return g[0]; }).filter(function (k) { return p[k].length; })[0];
+        if (t && window.matchMedia("(min-width: 900px)").matches) { ordenar(p); ui.sel = { tipo: t, imo: p[t][0].imo }; }
+      }
+      pintarTodo();
+    });
+  }
+
+  document.addEventListener("click", function (ev) {
+    var seg = ev.target.closest("[data-puerto]");
+    if (seg) {
+      ui.puerto = seg.getAttribute("data-puerto");
+      try { localStorage.setItem("rada.puerto", ui.puerto); } catch (e) {}
+      pintarLista(); return;
+    }
+    var t = ev.target.closest(".tarjeta");
+    if (t) { ui.sel = { tipo: t.getAttribute("data-tipo"), imo: t.getAttribute("data-imo") }; pintarLista(); pintarDetalle(); return; }
+    if (ev.target.closest("#b-volver")) { $("det").classList.remove("abierta"); return; }
+    if (ev.target.closest("#b-recargar")) cargar($("b-recargar"));
+  });
+  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") $("det").classList.remove("abierta"); });
+  window.addEventListener("hashchange", function () { ui.sel = null; seleccionarDesdeHash(); pintarTodo(); });
+
+  cargar(null);
+  setInterval(function () { cargar(null); }, 2 * 60 * 1000);
+  setInterval(function () { if (D) pintarCabecera(); }, 30 * 1000);
+})();
+</script>
+</body>
+</html>
